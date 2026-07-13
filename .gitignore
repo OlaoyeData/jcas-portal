@@ -1,0 +1,33 @@
+# ── Environment / secrets ──────────────────────────
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# ── Python (backend) ───────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyc
+backend/venv/
+backend/.venv/
+*.egg-info/
+.pytest_cache/
+
+# ── Uploaded files (manuscripts, payments, etc.) ───
+backend/uploads/
+
+# ── Node / frontend ─────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# ── Editor / OS junk ─────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────
+*.log
