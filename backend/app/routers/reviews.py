@@ -497,6 +497,11 @@ def download_review_file(
     if not (is_editor or is_uploader or is_author_with_access):
         raise HTTPException(status_code=403, detail="Access denied")
 
+    if settings.USE_S3:
+        from app.utils.storage import generate_download_url
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(generate_download_url(rf.file_path, filename=rf.filename))
+
     return FileResponse(rf.file_path, filename=rf.filename)
 
 

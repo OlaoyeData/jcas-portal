@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 from fastapi.responses import FileResponse
 import os
 
+from app.core.config import settings
 from app.core.dependencies import get_db, get_current_active_user, require_role
 from app.models.user import User, UserRole
 from app.models.manuscript import (
@@ -402,6 +403,12 @@ def download_file(
     ).first()
     if not f:
         raise HTTPException(status_code=404, detail="File not found")
+
+    if settings.USE_S3:
+        from app.utils.storage import generate_download_url
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(generate_download_url(f.file_path, filename=f.filename))
+
     if not os.path.exists(f.file_path):
         raise HTTPException(status_code=404, detail="File no longer exists on disk")
 

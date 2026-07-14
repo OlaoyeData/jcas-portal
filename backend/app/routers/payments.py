@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_db, get_current_active_user, require_role
+from app.core.config import settings
 from app.models.user import User, UserRole
 from app.models.payment import Payment
 from fastapi.responses import FileResponse
@@ -109,17 +110,19 @@ async def upload_payment_proof(
     if payment.status == "confirmed":
         raise HTTPException(status_code=400, detail="Payment already confirmed")
 
-    from app.core.config import settings
-    upload_dir = os.path.join(settings.UPLOAD_DIR, "payments")
-    os.makedirs(upload_dir, exist_ok=True)
-
-    stored_name = f"{uuid.uuid4().hex}{file_ext}"
-    file_path   = os.path.join(upload_dir, stored_name)
-
     contents  = await file.read()
+    stored_name = f"{uuid.uuid4().hex}{file_ext}"
 
-    with open(file_path, "wb") as fp:
-        fp.write(contents)
+    if settings.USE_S3:
+        from app.utils.storage import upload_bytes
+        file_path = f"payments/{stored_name}"
+        upload_bytes(contents, file_path, content_type=file.content_type or "image/jpeg")
+    else:
+        upload_dir = os.path.join(settings.UPLOAD_DIR, "payments")
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, stored_name)
+        with open(file_path, "wb") as fp:
+            fp.write(contents)
 
     payment.proof_filename    = file.filename
     payment.proof_stored_name = stored_name
@@ -228,6 +231,14 @@ def download_payment_proof(
         raise HTTPException(status_code=404, detail="No payment record found")
     if not payment.proof_file_path:
         raise HTTPException(status_code=404, detail="No proof has been uploaded yet")
+
+    if settings.USE_S3:
+        from app.utils.storage import generate_download_url
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(generate_download_url(
+            payment.proof_file_path, filename=payment.proof_filename or "payment_proof"
+        ))
+
     if not os.path.exists(payment.proof_file_path):
         raise HTTPException(status_code=404, detail="Proof file no longer exists on disk")
 

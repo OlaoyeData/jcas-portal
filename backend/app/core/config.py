@@ -49,12 +49,14 @@ class Settings(BaseSettings):
     EMAILS_FROM_NAME: str = "JCAS Editorial System"
     EMAILS_ENABLED: bool = False
 
-    # ── AWS S3 ────────────────────────────────────────────────────────────
+    # ── AWS S3 / S3-compatible storage (e.g. Cloudflare R2) ─────────────────
     USE_S3: bool = False
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_S3_BUCKET: str = "jcas-manuscripts"
     AWS_REGION: str = "us-east-1"
+    S3_ENDPOINT_URL: str = ""   # leave blank for real AWS S3; set for R2/other S3-compatible services
+    S3_PUBLIC_URL: str = ""    # optional: CDN/public bucket URL prefix, if you make the bucket public later
 
     # ── First Admin ───────────────────────────────────────────────────────
     FIRST_ADMIN_EMAIL: str = "admin@jcas.edu"
