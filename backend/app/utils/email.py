@@ -1,14 +1,26 @@
 """
-Email sending utilities.
+Email sending utilities (Resend HTTP API).
 
-Wire up your own SMTP provider by filling in settings.SMTP_* values
-and setting EMAILS_ENABLED=True in .env.
+Set RESEND_API_KEY, EMAILS_FROM_EMAIL (on a domain verified in Resend) and
+EMAILS_ENABLED=True in the environment.
+
+Render blocks outbound SMTP, so mail goes over HTTPS. Sending happens on a
+background worker so API requests never wait on the email provider.
 """
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import html as html_lib
+import re
+import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
+
+import httpx
+
 from app.core.config import settings
+
+# One worker => emails are sent one at a time, which also keeps us under
+# Resend's rate limit (~2 requests/second) when emailing several admins.
+_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="email")
+
 
 def _render(template_str: str, context: dict) -> str:
     """Replace {placeholder} tokens with values from context."""
@@ -30,36 +42,53 @@ def _get_template(db, key: str):
     return None, None
 
 
+def _to_html(text: str) -> str:
+    """Templates are plain text with newlines. HTML collapses newlines, so convert
+    them and make links clickable."""
+    escaped = html_lib.escape(text)
+    linked = re.sub(r'(https?://[^\s<]+)', r'<a href="\1">\1</a>', escaped)
+    return linked.replace("\n", "<br>")
+
+
+def _deliver(payload: dict) -> None:
+    headers = {"Authorization": f"Bearer {settings.RESEND_API_KEY}"}
+    try:
+        for attempt in range(3):
+            r = httpx.post("https://api.resend.com/emails", json=payload,
+                           headers=headers, timeout=15)
+            if r.status_code == 429 and attempt < 2:
+                time.sleep(1 + attempt)
+                continue
+            r.raise_for_status()
+            return
+    except Exception as exc:
+        print(f"[EMAIL ERROR] to={payload.get('to')} {exc}")
+
+
 def send_email(
     to_email: str,
     subject: str,
     html_body: str,
     text_body: Optional[str] = None,
 ) -> bool:
-    """Send an email. Returns True on success, False on failure."""
+    """Queue an email for sending via Resend and return immediately.
+    Returns True if queued, False if it could not be queued."""
     if not settings.EMAILS_ENABLED:
         print(f"[EMAIL STUB] To: {to_email} | Subject: {subject}")
         return True
-
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"]    = f"{settings.EMAILS_FROM_NAME} <{settings.EMAILS_FROM_EMAIL}>"
-    msg["To"]      = to_email
-
-    if text_body:
-        msg.attach(MIMEText(text_body, "plain"))
-    msg.attach(MIMEText(html_body, "html"))
-
-    try:
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            server.sendmail(settings.EMAILS_FROM_EMAIL, to_email, msg.as_string())
-        return True
-    except Exception as exc:
-        print(f"[EMAIL ERROR] {exc}")
+    if not settings.RESEND_API_KEY:
+        print("[EMAIL ERROR] RESEND_API_KEY is not set")
         return False
+
+    payload = {
+        "from": f"{settings.EMAILS_FROM_NAME} <{settings.EMAILS_FROM_EMAIL}>",
+        "to": [to_email],
+        "subject": subject,
+        "text": text_body or html_body,
+        "html": _to_html(html_body),
+    }
+    _executor.submit(_deliver, payload)
+    return True
 
 
 # ── Pre-built email helpers ──────────────────────────────────────────────
@@ -70,7 +99,7 @@ def send_verification_email(name: str, email: str, token: str, db=None):
     body_tmpl    = (
         "Dear {author_name},\n\n"
         "Thanks for registering with JCAS. Please confirm your email address by clicking the link below "
-        "(valid for 48 hours):\n\n{verify_url}\n\n"
+        "(valid for 24 hours; unconfirmed accounts are deleted after that):\n\n{verify_url}\n\n"
         "If you did not create this account, you can safely ignore this email.\n\n"
         "Best regards,\nThe JCAS Editorial Team"
     )

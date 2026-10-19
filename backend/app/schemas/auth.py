@@ -16,6 +16,14 @@ class TokenResponse(BaseModel):
     user: UserOut
 
 
+class RegisterResponse(UserOut):
+    """Same fields as UserOut, plus tokens so the new user is logged in straight away.
+    Tokens are omitted for accounts that need approval first (new reviewers)."""
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+    token_type: str = "bearer"
+
+
 class RefreshRequest(BaseModel):
     refresh_token: str
 

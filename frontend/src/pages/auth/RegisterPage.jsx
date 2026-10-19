@@ -39,13 +39,13 @@ export function RegisterPage() {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    setLoading(true)
     const pwError = validatePassword(password)
     if (pwError) { setErrors(p => ({ ...p, password: pwError })); return }
+    setLoading(true)
     const result = await register({ name, email, affiliation, role, password })
     setLoading(false)
     if (result.ok && result.pending) {
-      setPending(result.message || 'Please check your email to confirm your account before logging in.')
+      setPending(result.message || 'Please check your email to confirm your account.')
     } else if (result.ok) {
       navigate(`/dashboard/${result.role}`)
     } else {

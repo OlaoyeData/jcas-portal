@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    @apply font-sans text-gray-900 bg-gray-50 antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-navy-900 text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-navy-800 transition-colors focus:outline-none focus:ring-2 focus:ring-navy-600 focus:ring-offset-2;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 bg-white text-navy-900 border border-navy-200 px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-navy-50 transition-colors focus:outline-none focus:ring-2 focus:ring-navy-600 focus:ring-offset-2;
+  }
+  .btn-outline {
+    @apply inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wide;
+  }
+  .badge-open-access {
+    @apply badge bg-navy-900 text-white;
+  }
+  .badge-subscription {
+    @apply badge bg-gray-100 text-gray-700 border border-gray-300;
+  }
+  .badge-peer-reviewed {
+    @apply badge bg-gray-100 text-gray-600 border border-gray-300;
+  }
+  .badge-published {
+    @apply badge bg-green-100 text-green-800;
+  }
+  .badge-review {
+    @apply badge bg-gray-100 text-gray-700;
+  }
+  .badge-revision {
+    @apply badge bg-red-100 text-red-700;
+  }
+  .badge-editor {
+    @apply badge bg-purple-100 text-purple-700;
+  }
+  .badge-decision {
+    @apply badge bg-green-100 text-green-800;
+  }
+  .badge-priority {
+    @apply badge bg-orange-100 text-orange-800;
+  }
+  .card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm;
+  }
+  .form-input {
+    @apply w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-600 focus:border-transparent placeholder-gray-400;
+  }
+  .form-label {
+    @apply block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5;
+  }
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer;
+  }
+  .sidebar-link-active {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium bg-navy-700 text-white;
+  }
+}
+
+/* Article body typography */
+.article-body {
+  font-family: 'Crimson Text', Georgia, serif;
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: #1a1a2e;
+}
+.article-body h1, .article-body h2, .article-body h3 {
+  font-family: 'Crimson Text', Georgia, serif;
+  font-weight: 600;
+}
+.article-title {
+  font-family: 'Crimson Text', Georgia, serif;
+  font-weight: 600;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}

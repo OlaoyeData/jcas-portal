@@ -61,6 +61,7 @@ class UserOut(BaseModel):
     notification_preferences: dict = {}
     created_at:     datetime
     last_login:     Optional[datetime]
+    verification_deadline: Optional[datetime] = None   # set while the email is unverified
 
     model_config = {"from_attributes": True}
 

@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-import token
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.dependencies import get_db, get_current_active_user
@@ -8,21 +7,16 @@ from app.core.security import (
     create_access_token, create_refresh_token,
     decode_token, create_password_reset_token,
     verify_password_reset_token,
+    create_email_verification_token, verify_email_verification_token,
 )
 from app.models.user import User, UserRole
 from app.schemas.auth import (
     LoginRequest, TokenResponse, RefreshRequest,
     AccessTokenResponse, PasswordResetRequest, PasswordResetConfirm,
+    RegisterResponse,
 )
 from app.schemas.user import UserCreate, UserOut
-from app.utils.email import send_welcome_email, send_password_reset_email
-from app.core.security import (
-    hash_password, verify_password,
-    create_access_token, create_refresh_token,
-    decode_token, create_password_reset_token,
-    verify_password_reset_token,
-    create_email_verification_token, verify_email_verification_token,
-)
+from app.services.account_cleanup import delete_unverified_user
 from app.utils.email import (
     send_welcome_email, send_password_reset_email,
     send_verification_email, notify_admins_of_verification,
@@ -37,7 +31,7 @@ def _get_admin_emails(db: Session) -> list:
     return [a.email for a in admins]
 
 
-@router.post("/register", response_model=UserOut, status_code=201)
+@router.post("/register", response_model=RegisterResponse, status_code=201)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
     # Block privileged roles from self-registering
     if payload.role in (UserRole.EDITOR, UserRole.EDITOR_IN_CHIEF, UserRole.ADMIN):
@@ -68,7 +62,13 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
 
     token = create_email_verification_token(user.email)
     send_verification_email(name=user.name, email=user.email, token=token, db=db)
-    return user
+
+    # Log the user in straight away. New reviewers still wait for approval, so no tokens.
+    data = UserOut.model_validate(user).model_dump()
+    if user.is_approved:
+        data["access_token"] = create_access_token(user.id)
+        data["refresh_token"] = create_refresh_token(user.id)
+    return RegisterResponse(**data)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -82,15 +82,12 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         )
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Account is deactivated")
-    if user.role == UserRole.AUTHOR and not user.is_verified:
-        notify_admins_of_verification(
-            admin_emails=_get_admin_emails(db),
-            user_name=user.name, user_email=user.email,
-            confirmed=False, db=db,
-        )
+    if user.is_verification_expired:
+        # Verification window passed: remove the account, they must register again.
+        delete_unverified_user(db, user)
         raise HTTPException(
             status_code=403,
-            detail="Please confirm your email address before logging in. Check your inbox for the confirmation link."
+            detail="Your account was not verified in time and has been removed. Please register again."
         )
     if user.role == UserRole.REVIEWER and not user.is_approved:
         raise HTTPException(

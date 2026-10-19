@@ -41,13 +41,14 @@ class Settings(BaseSettings):
         return [f".{e.strip()}" for e in self.ALLOWED_FILE_TYPES.split(",")]
 
     # ── Email ─────────────────────────────────────────────────────────────
-    SMTP_HOST: str = "smtp.gmail.com"
-    SMTP_PORT: int = 587
-    SMTP_USER: str = ""
-    SMTP_PASSWORD: str = ""
+    RESEND_API_KEY: str = ""
     EMAILS_FROM_EMAIL: str = "noreply@jcas.edu"
     EMAILS_FROM_NAME: str = "JCAS Editorial System"
     EMAILS_ENABLED: bool = False
+
+    # ── Unverified accounts ───────────────────────────────────────────────
+    UNVERIFIED_ACCOUNT_TTL_HOURS: int = 24        # time allowed to verify email
+    CLEANUP_INTERVAL_MINUTES: int = 60            # how often expired accounts are purged
 
     # ── AWS S3 / S3-compatible storage (e.g. Cloudflare R2) ─────────────────
     USE_S3: bool = False

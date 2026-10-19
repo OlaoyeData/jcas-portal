@@ -4,6 +4,7 @@ from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime,
     Enum as SAEnum, Text, JSON
 )
+from datetime import timedelta
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
@@ -52,6 +53,32 @@ class User(Base):
     notifications      = relationship("Notification", back_populates="user")
     editor_assignments = relationship("Manuscript", back_populates="editor",
                                       foreign_keys="Manuscript.editor_id")
+
+    # ── Email-verification deadline ──────────────────────────────────────
+    @property
+    def _subject_to_verification_deadline(self) -> bool:
+        """Self-registered accounts that must verify their email in time.
+        Reviewers already approved by the editorial office are left alone."""
+        if self.is_verified or self.created_at is None:
+            return False
+        if self.role == UserRole.AUTHOR:
+            return True
+        return self.role == UserRole.REVIEWER and not self.is_approved
+
+    @property
+    def verification_deadline(self):
+        if not self._subject_to_verification_deadline:
+            return None
+        from app.core.config import settings
+        created = self.created_at
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+        return created + timedelta(hours=settings.UNVERIFIED_ACCOUNT_TTL_HOURS)
+
+    @property
+    def is_verification_expired(self) -> bool:
+        deadline = self.verification_deadline
+        return deadline is not None and datetime.now(timezone.utc) > deadline
 
     def wants_notification(self, key: str) -> bool:
         """Defaults to True if unset (opt-out model) so existing users keep getting emails

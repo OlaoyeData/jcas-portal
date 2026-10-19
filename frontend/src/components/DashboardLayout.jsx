@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import NotificationBell from './NotificationBell'
+import VerificationBanner from './VerificationBanner'
 
 const roleNav = {
   author: [
@@ -156,6 +157,8 @@ const SidebarContent = () => (
             </Link>
           </div>
         </div>
+
+        <VerificationBanner />
 
         <main className="flex-1 min-w-0 overflow-y-auto">
           <Outlet />

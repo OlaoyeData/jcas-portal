@@ -75,7 +75,7 @@ def verify_password_reset_token(token: str) -> Optional[str]:
     return None
 
 def create_email_verification_token(email: str) -> str:
-    return _create_token(email, "email_verification", timedelta(hours=48))
+    return _create_token(email, "email_verification", timedelta(hours=settings.UNVERIFIED_ACCOUNT_TTL_HOURS))
 
 
 def verify_email_verification_token(token: str) -> Optional[str]:

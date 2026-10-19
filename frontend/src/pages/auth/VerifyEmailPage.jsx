@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { CheckCircle, AlertCircle, MailCheck } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams()
   const navigate        = useNavigate()
+  const { user, refreshUser } = useAuth()
   const token            = searchParams.get('token')
 
   const [status,  setStatus]  = useState(token ? 'verifying' : 'missing')
@@ -24,6 +26,7 @@ export default function VerifyEmailPage() {
         const data = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(data.detail || 'Verification failed. The link may have expired.')
         setMessage(data.detail || 'Email confirmed successfully.')
+        if (localStorage.getItem('access_token')) await refreshUser()   // clears the red banner
         setStatus('done')
       } catch (err) {
         setMessage(err.message)
@@ -56,8 +59,11 @@ export default function VerifyEmailPage() {
               </div>
               <h1 className="text-xl font-bold text-navy-900 mb-2">Email confirmed</h1>
               <p className="text-gray-500 text-sm mb-6">{message}</p>
-              <button onClick={() => navigate('/login')} className="btn-primary w-full justify-center py-3 text-sm">
-                Go to Sign In
+              <button
+                onClick={() => navigate(user ? `/dashboard/${user.role}` : '/login')}
+                className="btn-primary w-full justify-center py-3 text-sm"
+              >
+                {user ? 'Go to Dashboard' : 'Go to Sign In'}
               </button>
             </>
           )}

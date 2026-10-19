@@ -67,6 +67,17 @@ export function AuthProvider({ children }) {
   }
 }
 
+  // Re-fetch the current user (e.g. after email verification)
+  const refreshUser = React.useCallback(async () => {
+    try {
+      const u = await authApi.me()
+      setUser(u)
+      return u
+    } catch {
+      return null
+    }
+  }, [])
+
   const logout = () => {
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
@@ -74,7 +85,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register, refreshUser, isAuthenticated: !!user }}>
       {!loading && children}
     </AuthContext.Provider>
   )

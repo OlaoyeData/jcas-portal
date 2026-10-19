@@ -32,7 +32,7 @@ The JCAS Editorial Team""",
         "subject": "JCAS — Confirm Your Email Address",
         "body": """Dear {author_name},
 
-Thanks for registering with JCAS. Please confirm your email address by clicking the link below (valid for 48 hours):
+Thanks for registering with JCAS. Please confirm your email address by clicking the link below (valid for 24 hours; unconfirmed accounts are deleted after that):
 
 {verify_url}
 
