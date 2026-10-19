@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Plus, Check, X, Mail, Clock, UserCheck, UserX, Loader, Send } from 'lucide-react'
+import { Search, Plus, Check, X, Mail, Clock, UserCheck, UserX, Loader, Send, Trash2 } from 'lucide-react'
 import { usersApi, adminApi } from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
 
 const roleCls = {
   admin:           'bg-purple-100 text-purple-800',
@@ -11,6 +12,7 @@ const roleCls = {
 }
 
 export default function AdminUsersPage() {
+  const { user: me } = useAuth()
   const [users,          setUsers]          = useState([])
   const [loading,        setLoading]        = useState(true)
   const [userSearch,     setUserSearch]     = useState('')
@@ -69,13 +71,16 @@ export default function AdminUsersPage() {
     }
   }
 
-  const deleteUser = async (id) => {
-    if (!window.confirm('Deactivate this user? They will no longer be able to log in.')) return
+  const deleteUser = async (user) => {
+    if (!window.confirm(
+      `Permanently delete ${user.name} (${user.email})?\n\nThis cannot be undone. ` +
+      `To block access but keep the account, use Suspend instead.`
+    )) return
     try {
-      await usersApi.updateUser(id, { is_active: false })
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, is_active: false } : u))
+      await usersApi.deleteUserPermanently(user.id)
+      setUsers(prev => prev.filter(u => u.id !== user.id))
     } catch (err) {
-      alert(`Error: ${err.message}`)
+      alert(err.message)   // e.g. "This user has manuscripts and cannot be deleted. Suspend the account instead."
     }
   }
 
@@ -347,6 +352,14 @@ export default function AdminUsersPage() {
                     >
                       {u.is_active === false ? <Check size={14} /> : <X size={14} />}
                     </button>
+                    <button
+                      onClick={() => deleteUser(u)}
+                      disabled={u.id === me?.id}
+                      title={u.id === me?.id ? 'You cannot delete your own account' : 'Delete permanently'}
+                      className="p-1.5 rounded hover:bg-red-50 text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -355,7 +368,7 @@ export default function AdminUsersPage() {
         </table>
       </div>
       <p className="text-xs text-gray-400 mt-3">
-        Change a user's role via the dropdown. The orange button suspends an account; the green button re-activates it.
+        Change a user's role via the dropdown. The orange button suspends an account; the green button re-activates it; the red bin permanently deletes it (only possible if the user has no manuscripts or review work).
         Editor accounts must be created via invitation (above) — they cannot self-register.
       </p>
     </div>

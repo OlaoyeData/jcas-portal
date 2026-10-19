@@ -208,6 +208,8 @@ export const usersApi = {
     request(`/users/${id}/reject-reviewer`, { method: 'POST' }),
   listAll:    (role) =>
     request(`/users/${role ? `?role=${role}` : ''}`),
+  deleteUserPermanently: (id) =>
+    request(`/users/${id}/permanent`, { method: 'DELETE' }),
   updateUser: (id, data) =>
     request(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   changePassword: (current_password, new_password) =>

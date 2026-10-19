@@ -7,6 +7,7 @@ from app.core.dependencies import (
 from app.core.security import hash_password, verify_password
 from app.models.user import User, UserRole
 from app.schemas.user import UserOut, UserUpdate, UserSummary, UserAdminUpdate, UserPasswordChange
+from app.services.user_deletion import permanently_delete_user, UserHasRecordsError
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -211,3 +212,28 @@ def deactivate_user(
         raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
     user.is_active = False
     db.commit()
+
+
+@router.delete("/{user_id}/permanent", status_code=204)
+def delete_user_permanently(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Permanently delete an account (admin only). Blocked if the user owns manuscripts or
+    review work, in which case the admin should suspend the account instead."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
+    try:
+        permanently_delete_user(db, user)
+    except UserHasRecordsError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"This user has {', '.join(exc.blockers)} and cannot be deleted. "
+                "Suspend the account instead."
+            ),
+        )
