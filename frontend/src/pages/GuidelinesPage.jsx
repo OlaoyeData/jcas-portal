@@ -10,7 +10,7 @@ const checklist = [
   'Up to 8 keywords have been provided, separated by commas.',
   'All figures and tables are embedded in the manuscript file at appropriate positions.',
   'All references follow the IEEE citation format consistently.',
-  'Funding acknowledgements and conflict-of-interest statements are included.',
+  'A Declarations section is included (funding, competing interests, ethics approval, data and code availability, author contributions).',
   'For revised manuscripts, a response-to-reviewers document has been attached.',
 ]
 
@@ -18,12 +18,15 @@ const structure = [
   { label: 'Title', desc: 'Concise and informative; no abbreviations.' },
   { label: 'Abstract', desc: '150–300 words; structured (Background, Methods, Results, Conclusion) for research articles.' },
   { label: 'Keywords', desc: '4–8 terms, comma-separated. Avoid overly general terms.' },
-  { label: 'Introduction', desc: 'Context, problem statement, objectives, and paper organisation.' },
-  { label: 'Related Work / Literature Review', desc: 'Critical synthesis of prior work; identify research gaps.' },
-  { label: 'Methodology', desc: 'Detailed enough to allow replication. Include dataset description and ethical approvals where applicable.' },
-  { label: 'Results', desc: 'Objective presentation of findings. Use figures and tables for clarity.' },
-  { label: 'Discussion', desc: 'Interpretation of results; comparison with prior work; limitations.' },
-  { label: 'Conclusion', desc: 'Summary of contributions and future work directions.' },
+  { num: 1, label: 'Introduction', desc: 'Context, problem statement, objectives or research questions, contributions, and paper organisation.' },
+  { num: 2, label: 'Background and Literature Review', desc: 'Critical synthesis of prior work and the concepts the paper builds on; identify the research gap.' },
+  { num: 3, label: 'Methodology', desc: 'The proposed approach, detailed enough to allow replication. Include dataset description and ethical approvals where applicable.' },
+  { num: 4, label: 'Experimental Design', desc: 'Setup, datasets or participants, parameters, baselines, evaluation metrics, and the procedure followed.' },
+  { num: 5, label: 'Results', desc: 'Objective presentation of findings. Use figures and tables for clarity.' },
+  { num: 6, label: 'Discussion', desc: 'Interpretation of results, comparison with prior work, and implications.' },
+  { num: 7, label: 'Threats to Validity', desc: 'Internal, external, construct and conclusion validity; limitations and how they were mitigated.' },
+  { num: 8, label: 'Conclusion and Future Work', desc: 'Summary of contributions and directions for future research.' },
+  { label: 'Declarations', desc: 'Funding, competing interests, ethics approval, data and code availability, and author contributions.' },
   { label: 'References', desc: 'IEEE format. Minimum 20 references for research articles.' },
 ]
 
@@ -91,7 +94,7 @@ export default function GuidelinesPage() {
             <div className="space-y-3">
               {structure.map((s, i) => (
                 <div key={s.label} className="flex gap-3 text-sm">
-                  <span className="w-6 h-6 rounded-full bg-navy-50 text-navy-700 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{i+1}</span>
+                  <span className="w-6 h-6 rounded-full bg-navy-50 text-navy-700 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.num ?? '•'}</span>
                   <div>
                     <span className="font-semibold text-gray-800">{s.label}: </span>
                     <span className="text-gray-600">{s.desc}</span>

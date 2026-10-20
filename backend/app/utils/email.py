@@ -282,3 +282,24 @@ def send_payment_confirmed_email(author_email: str, author_name: str,
     ctx = {"author_name": author_name, "manuscript_id": manuscript_id,
            "manuscript_title": title, "frontend_url": settings.FRONTEND_URL}
     send_email(author_email, _render(subject_tmpl, ctx), _render(body_tmpl, ctx))
+
+
+def send_manuscript_under_review_email(author_email: str, author_name: str,
+                                        manuscript_id: str, title: str, db=None):
+    subject_tmpl = "JCAS — Your Manuscript Has Been Sent for Review: {manuscript_id}"
+    body_tmpl = (
+        "Dear {author_name},\n\n"
+        "Your manuscript \"{manuscript_title}\" (ID: {manuscript_id}) has now been sent to a "
+        "reviewer for peer review.\n\n"
+        "You can follow its progress from your author dashboard:\n"
+        "{frontend_url}/dashboard/author\n\n"
+        "We will notify you as soon as an editorial decision has been made.\n\n"
+        "Best regards,\nThe JCAS Editorial Team"
+    )
+    if db:
+        s, b = _get_template(db, "sent_for_review")
+        if s: subject_tmpl = s
+        if b: body_tmpl    = b
+    ctx = {"author_name": author_name, "manuscript_id": manuscript_id,
+           "manuscript_title": title, "frontend_url": settings.FRONTEND_URL}
+    send_email(author_email, _render(subject_tmpl, ctx), _render(body_tmpl, ctx))

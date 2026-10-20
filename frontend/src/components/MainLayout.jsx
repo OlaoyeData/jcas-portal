@@ -27,6 +27,15 @@ function Navbar() {
   { to: '/submit/guidelines', label: 'Submit' },
 ]
 
+  // Signed-in users also get a Dashboard link, so they can move between home and dashboard
+  const links = isAuthenticated
+    ? [...navLinks, { to: `/dashboard/${user.role}`, label: 'Dashboard' }]
+    : navLinks
+
+  const initials = user?.name
+    ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : 'U'
+
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,7 +47,7 @@ function Navbar() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map(l => (
+            {links.map(l => (
               <NavLink
                 key={l.to}
                 to={l.to}
@@ -80,7 +89,7 @@ function Navbar() {
               <div className="flex items-center gap-2">
                 <Link to={`/dashboard/${user.role}`} className="hidden sm:flex items-center gap-2 text-sm font-medium text-navy-900 hover:underline">
                   <span className="w-8 h-8 rounded-full bg-navy-900 text-white flex items-center justify-center text-xs font-bold">
-                    {user.initials}
+                    {initials}
                   </span>
                 </Link>
                 <button onClick={() => { logout(); navigate('/') }} className="hidden sm:block text-sm text-gray-500 hover:text-gray-800">

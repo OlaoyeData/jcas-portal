@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ChevronLeft, UserPlus, Send, FileText,
   CheckCircle, Search, AlertCircle, Mail,
-  BookOpen, Loader, Download
+  BookOpen, Loader, Download, Trash2
 } from 'lucide-react'
 import { manuscriptsApi, reviewsApi, usersApi, archiveApi, paymentsApi } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -199,6 +199,22 @@ const handleDownloadReviewFile = async (file) => {
     </div>
   )
 
+  const handleDeleteManuscript = async () => {
+    const published = manuscript.status === 'published'
+    if (!window.confirm(
+      `Permanently delete "${manuscript.title}" (${manuscript.manuscript_id})?\n\n` +
+      `This removes the manuscript, its files, reviews and payment records` +
+      `${published ? ', and takes the published article off the archive' : ''}. ` +
+      `This cannot be undone.`
+    )) return
+    try {
+      await manuscriptsApi.deletePermanently(manuscript.id)
+      navigate(backPath)
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
   const completedReviews = reviews.length
   const canMakeDecision  = completedReviews >= 2 || manuscript.status === 'revision_submitted'
   const isAccepted       = manuscript.status === 'accepted'
@@ -237,6 +253,14 @@ const handleDownloadReviewFile = async (file) => {
           <h1 className="text-xl sm:text-2xl font-bold text-navy-900 leading-snug">{manuscript.title}</h1>
           <p className="text-sm text-gray-500 mt-1">{manuscript.article_type}</p>
         </div>
+        {user?.role === 'admin' && (
+          <button
+            onClick={handleDeleteManuscript}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors self-start"
+          >
+            <Trash2 size={14} /> Delete manuscript
+          </button>
+        )}
       </div>
 
       {/* Tabs */}

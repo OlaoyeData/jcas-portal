@@ -68,6 +68,13 @@ def invite_reviewer(
     if not reviewer:
         raise HTTPException(status_code=404, detail="Reviewer not found")
 
+    # First reviewer ever assigned to this manuscript? Then the author gets told once.
+    is_first_assignment = (
+        db.query(ReviewAssignment)
+        .filter(ReviewAssignment.manuscript_id == manuscript_id)
+        .count() == 0
+    )
+
     deadline = payload.deadline or (
         datetime.now(timezone.utc) + timedelta(days=DEFAULT_REVIEW_DAYS)
     )
@@ -94,6 +101,15 @@ def invite_reviewer(
             manuscript_title=ms.title,
             deadline=str(assignment.deadline.date()) if assignment.deadline else "Not specified",
             accept_url=f"{settings.FRONTEND_URL}/dashboard/reviewer/invitations",
+            db=db,
+        )
+    if is_first_assignment and ms.submitter:
+        from app.utils.email import send_manuscript_under_review_email
+        send_manuscript_under_review_email(
+            author_email=ms.submitter.email,
+            author_name=ms.submitter.name,
+            manuscript_id=ms.manuscript_id,
+            title=ms.title,
             db=db,
         )
     db.commit()

@@ -59,6 +59,8 @@ export const manuscriptsApi = {
     request(`/manuscripts/${id}/submit`, { method: 'POST' }),
   resubmit: (id) =>
     request(`/manuscripts/${id}/resubmit`, { method: 'POST' }),
+  deletePermanently: (id) =>
+    request(`/manuscripts/${id}/permanent`, { method: 'DELETE' }),
   withdraw: (id) =>
     request(`/manuscripts/${id}`, { method: 'DELETE' }),
   assignEditor: (id, editor_id) =>

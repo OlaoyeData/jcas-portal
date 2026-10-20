@@ -27,6 +27,21 @@ Login at: {frontend_url}/login
 Best regards,
 The JCAS Editorial Team""",
     },
+    "sent_for_review": {
+        "label":   "Manuscript Sent for Review",
+        "subject": "JCAS — Your Manuscript Has Been Sent for Review: {manuscript_id}",
+        "body": """Dear {author_name},
+
+Your manuscript "{manuscript_title}" (ID: {manuscript_id}) has now been sent to a reviewer for peer review.
+
+You can follow its progress from your author dashboard:
+{frontend_url}/dashboard/author
+
+We will notify you as soon as an editorial decision has been made.
+
+Best regards,
+The JCAS Editorial Team""",
+    },
     "email_verification": {
         "label":   "Confirm Email Address",
         "subject": "JCAS — Confirm Your Email Address",

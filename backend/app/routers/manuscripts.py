@@ -327,6 +327,39 @@ def withdraw_manuscript(
     db.commit()
 
 
+@router.delete("/{manuscript_id}/permanent", status_code=204)
+def delete_manuscript_permanently(
+    manuscript_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
+):
+    """Permanently delete a manuscript and everything attached to it (admin only)."""
+    ms = _get_manuscript_or_404(db, manuscript_id)
+
+    # Remember stored files so they can be removed after the database delete succeeds
+    stored = [f.file_path for f in ms.files]
+    for a in ms.review_assignments:
+        if a.review:
+            stored += [rf.file_path for rf in a.review.files]
+
+    if ms.article:
+        db.delete(ms.article)
+    for p in list(ms.payments):
+        db.delete(p)
+    db.delete(ms)          # co-authors, files, reviews, status history cascade
+    db.commit()
+
+    for path in stored:
+        try:
+            if settings.USE_S3:
+                from app.utils.storage import delete_object
+                delete_object(path)
+            elif path and os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass           # a leftover file must never fail the delete
+
+
 # ── File uploads ──────────────────────────────────────────────────────────
 
 @router.post("/{manuscript_id}/files", status_code=201)
