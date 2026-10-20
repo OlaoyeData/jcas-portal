@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, Trash2 } from 'lucide-react'
 import { manuscriptsApi } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -30,6 +30,23 @@ export default function EditorQueuePage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const isAdmin = user?.role === 'admin'
+
+  const handleDelete = async (sub) => {
+    if (!window.confirm(
+      `Permanently delete "${sub.title}" (${sub.manuscript_id})?\n\n` +
+      `This removes the manuscript, its files, reviews and payment records` +
+      `${sub.status === 'published' ? ', and takes the published article off the archive' : ''}. ` +
+      `This cannot be undone.`
+    )) return
+    try {
+      await manuscriptsApi.deletePermanently(sub.id)
+      setQueue(prev => prev.filter(s => s.id !== sub.id))
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
   const filtered = queue.filter(s => {
     const matchSearch =
       !searchQ ||
@@ -42,9 +59,13 @@ export default function EditorQueuePage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-navy-900">Submission Queue</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-navy-900">
+          {isAdmin ? 'All Manuscripts' : 'Submission Queue'}
+        </h1>
         <p className="text-gray-500 mt-1 text-sm">
-          All active submissions across every stage.
+          {isAdmin
+            ? 'Every submission and published article. Admins can delete manuscripts permanently.'
+            : 'All active submissions across every stage.'}
         </p>
       </div>
 
@@ -69,6 +90,9 @@ export default function EditorQueuePage() {
           { key: 'under_review',       label: 'Under Review'       },
           { key: 'revision_submitted', label: 'Awaiting Decision'  },
           { key: 'revision_required',  label: 'Revision Due'       },
+          { key: 'accepted',           label: 'Accepted'           },
+          { key: 'published',          label: 'Published'          },
+          { key: 'rejected',           label: 'Rejected'           },
         ].map(f => (
           <button
             key={f.key}
@@ -135,6 +159,14 @@ export default function EditorQueuePage() {
                     >
                       Make Decision
                     </Link>
+                  )}
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleDelete(sub)}
+                      className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold py-1.5 px-3 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
+                    >
+                      <Trash2 size={13} /> Delete
+                    </button>
                   )}
                 </div>
               </div>

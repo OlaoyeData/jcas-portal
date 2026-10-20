@@ -459,7 +459,7 @@ def download_file(
 def list_all_manuscripts(
     status: Optional[ManuscriptStatus] = None,
     skip: int = 0,
-    limit: int = 30,
+    limit: int = 200,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.EDITOR, UserRole.EDITOR_IN_CHIEF)),
 ):

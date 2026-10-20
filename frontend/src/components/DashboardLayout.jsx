@@ -32,6 +32,7 @@ reviewer: [
   admin: [
   { to: '/dashboard/admin',              label: 'Overview',        icon: LayoutDashboard, end: true },
   { to: '/dashboard/admin/users',        label: 'User Management', icon: Users            },
+  { to: '/dashboard/editor_in_chief/queue', label: 'Manuscripts',  icon: FileText         },
   { to: '/dashboard/admin/journal',      label: 'Journal Settings',icon: Settings         },
   { to: '/dashboard/admin/subjects',     label: 'Subject Areas',   icon: BookOpen         },
   { to: '/dashboard/admin/templates',    label: 'Email Templates', icon: Mail             },
